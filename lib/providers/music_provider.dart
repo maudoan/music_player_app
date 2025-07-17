@@ -153,10 +153,36 @@ class MusicProvider extends ChangeNotifier {
       if (_isPlaying) {
         await _audioPlayer.pause();
       } else {
-        await _audioPlayer.resume();
+        await _resumeOrReplay();
       }
     } catch (e) {
       debugPrint('Error pause/resume: $e');
+    }
+  }
+
+  // Method để resume hoặc play lại bài hát hiện tại
+  Future<void> _resumeOrReplay() async {
+    if (_currentSong == null) return;
+    
+    try {
+      // Kiểm tra state của player
+      final state = _audioPlayer.state;
+      
+      if (state == PlayerState.paused) {
+        // Nếu đang pause, resume bình thường
+        await _audioPlayer.resume();
+      } else {
+        // Nếu stopped hoặc state khác, play lại từ đầu
+        await _audioPlayer.play(DeviceFileSource(_currentSong!.filePath));
+      }
+    } catch (e) {
+      // Nếu có lỗi, cố gắng play lại từ đầu
+      debugPrint('Error in _resumeOrReplay, trying to play from start: $e');
+      try {
+        await _audioPlayer.play(DeviceFileSource(_currentSong!.filePath));
+      } catch (playError) {
+        debugPrint('Error playing from start: $playError');
+      }
     }
   }
 
@@ -164,6 +190,7 @@ class MusicProvider extends ChangeNotifier {
     try {
       await _audioPlayer.stop();
       _currentPosition = Duration.zero;
+      // Không reset _currentSong để có thể play lại sau khi stop
       notifyListeners();
     } catch (e) {
       debugPrint('Error stopping: $e');
@@ -175,6 +202,17 @@ class MusicProvider extends ChangeNotifier {
       await _audioPlayer.seek(position);
     } catch (e) {
       debugPrint('Error seeking: $e');
+    }
+  }
+
+  // Method để play lại bài hát hiện tại từ đầu
+  Future<void> replay() async {
+    if (_currentSong != null) {
+      try {
+        await _audioPlayer.play(DeviceFileSource(_currentSong!.filePath));
+      } catch (e) {
+        debugPrint('Error replaying song: $e');
+      }
     }
   }
 

@@ -184,8 +184,14 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.only(top: 8),
+                    : GridView.builder(
+                        padding: const EdgeInsets.all(8),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          childAspectRatio: 0.65, // Tăng chiều cao để phù hợp với 3 dòng text
+                        ),
                         itemCount: musicProvider.currentTab?.songs.length ?? 0,
                         itemBuilder: (context, index) {
                           final song = musicProvider.currentTab!.songs[index];
