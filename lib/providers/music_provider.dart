@@ -92,6 +92,9 @@ class MusicProvider extends ChangeNotifier {
   void setCurrentTab(int index) {
     if (index >= 0 && index < _tabs.length) {
       _currentTabIndex = index;
+      // Automatically sort songs when switching tabs
+      _sortSongsInTab(index);
+      _saveData();
       notifyListeners();
     }
   }
@@ -169,15 +172,15 @@ class MusicProvider extends ChangeNotifier {
     final String titleA = a.title.toLowerCase().trim();
     final String titleB = b.title.toLowerCase().trim();
     
-    // Extract numbers from the beginning of titles
-    final RegExp numberRegex = RegExp(r'^(\d+)');
+    // Extract numbers (including decimals) from the beginning of titles
+    final RegExp numberRegex = RegExp(r'^(\d+(?:\.\d+)?)');
     final Match? matchA = numberRegex.firstMatch(titleA);
     final Match? matchB = numberRegex.firstMatch(titleB);
     
     // Check if both titles start with numbers
     if (matchA != null && matchB != null) {
-      final int numA = int.parse(matchA.group(1)!);
-      final int numB = int.parse(matchB.group(1)!);
+      final double numA = double.parse(matchA.group(1)!);
+      final double numB = double.parse(matchB.group(1)!);
       return numA.compareTo(numB);
     }
     
