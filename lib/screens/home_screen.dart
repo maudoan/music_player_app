@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/music_provider.dart';
 import '../widgets/song_list_item.dart';
-import 'player_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -18,6 +17,15 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Colors.blue[700],
         elevation: 0,
         actions: [
+          Consumer<MusicProvider>(
+            builder: (context, musicProvider, child) {
+              return IconButton(
+                onPressed: musicProvider.tabs.isEmpty ? null : () => _showSortMenu(context),
+                icon: const Icon(Icons.sort, color: Colors.white),
+                tooltip: 'Sắp xếp bài hát',
+              );
+            },
+          ),
           IconButton(
             onPressed: () => _showAddTabDialog(context),
             icon: const Icon(Icons.add, color: Colors.white),
@@ -27,195 +35,7 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Consumer<MusicProvider>(
         builder: (context, musicProvider, child) {
-          if (musicProvider.tabs.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.music_note, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'Chưa có tab nhạc nào',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Nhấn + để tạo tab mới',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return Column(
-            children: [
-              // Tab bar với hướng dẫn rõ ràng
-              Container(
-                color: Colors.blue[50],
-                child: Column(
-                  children: [
-                    // Tab bar
-                    Container(
-                      height: 60,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        itemCount: musicProvider.tabs.length,
-                        itemBuilder: (context, index) {
-                          final tab = musicProvider.tabs[index];
-                          final isSelected = index == musicProvider.currentTabIndex;
-
-                          return GestureDetector(
-                            onTap: () => musicProvider.setCurrentTab(index),
-                            onLongPress: () {
-                              // Haptic feedback để user biết đã long press
-                              // HapticFeedback.mediumImpact();
-                              _showTabOptions(context, index, tab.title);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              margin: const EdgeInsets.symmetric(horizontal: 6),
-                              decoration: BoxDecoration(
-                                color: isSelected ? Colors.blue[700] : Colors.white,
-                                borderRadius: BorderRadius.circular(25),
-                                border: Border.all(
-                                  color: isSelected ? Colors.blue[700]! : Colors.blue[300]!,
-                                  width: 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: isSelected 
-                                        ? Colors.blue[700]!.withOpacity(0.3)
-                                        : Colors.grey.withOpacity(0.1),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.library_music,
-                                    size: 18,
-                                    color: isSelected ? Colors.white : Colors.blue[700],
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    tab.title,
-                                    style: TextStyle(
-                                      color: isSelected ? Colors.white : Colors.blue[700],
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  // Visual cue cho long press
-                                  Icon(
-                                    Icons.more_vert,
-                                    size: 14,
-                                    color: isSelected 
-                                        ? Colors.white.withOpacity(0.7)
-                                        : Colors.blue[400],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    
-                    // Hướng dẫn rõ ràng
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.touch_app, size: 16, color: Colors.blue[600]),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Chạm để chọn • ',
-                            style: TextStyle(
-                              color: Colors.blue[600],
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Icon(Icons.touch_app, size: 16, color: Colors.orange[600]),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Giữ để sửa/xóa',
-                            style: TextStyle(
-                              color: Colors.orange[600],
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Song list
-              Expanded(
-                child: musicProvider.currentTab?.songs.isEmpty == true
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.queue_music, size: 64, color: Colors.blue[300]),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Chưa có bài hát nào trong "${musicProvider.currentTab?.title}"',
-                              style: TextStyle(fontSize: 16, color: Colors.blue[600]),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Nhấn + để thêm nhạc',
-                              style: TextStyle(color: Colors.blue[400]),
-                            ),
-                          ],
-                        ),
-                      )
-                    : GridView.builder(
-                        padding: const EdgeInsets.all(8),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                          childAspectRatio: 0.65, // Tăng chiều cao để phù hợp với 3 dòng text
-                        ),
-                        itemCount: musicProvider.currentTab?.songs.length ?? 0,
-                        itemBuilder: (context, index) {
-                          final song = musicProvider.currentTab!.songs[index];
-                          return SongListItem(
-                            song: song,
-                            onTap: () {
-                              musicProvider.playSong(song);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const PlayerScreen(),
-                                ),
-                              );
-                            },
-                            onDelete: () => musicProvider.removeSongFromTab(
-                              musicProvider.currentTabIndex,
-                              index,
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          );
+          return _buildMainContent(context, musicProvider);
         },
       ),
       floatingActionButton: Consumer<MusicProvider>(
@@ -231,6 +51,377 @@ class HomeScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Widget _buildMainContent(BuildContext context, MusicProvider musicProvider) {
+    if (musicProvider.tabs.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.music_note, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'Chưa có tab nhạc nào',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Nhấn + để tạo tab mới',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // Tab bar với hướng dẫn rõ ràng
+        Container(
+          color: Colors.blue[50],
+          child: Column(
+            children: [
+              // Tab bar
+              Container(
+                height: 60,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  itemCount: musicProvider.tabs.length,
+                  itemBuilder: (context, index) {
+                    final tab = musicProvider.tabs[index];
+                    final isSelected = index == musicProvider.currentTabIndex;
+
+                    return GestureDetector(
+                      onTap: () => musicProvider.setCurrentTab(index),
+                      onLongPress: () {
+                        _showTabOptions(context, index, tab.title);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.blue[700] : Colors.white,
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(
+                            color: isSelected ? Colors.blue[700]! : Colors.blue[300]!,
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isSelected 
+                                  ? Colors.blue[700]!.withOpacity(0.3)
+                                  : Colors.grey.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.library_music,
+                              size: 18,
+                              color: isSelected ? Colors.white : Colors.blue[700],
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              tab.title,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.blue[700],
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.more_vert,
+                              size: 14,
+                              color: isSelected 
+                                  ? Colors.white.withOpacity(0.7)
+                                  : Colors.blue[400],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              
+              // Hướng dẫn rõ ràng
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.touch_app, size: 16, color: Colors.blue[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Chạm để chọn • ',
+                      style: TextStyle(
+                        color: Colors.blue[600],
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Icon(Icons.touch_app, size: 16, color: Colors.orange[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Giữ để sửa/xóa',
+                      style: TextStyle(
+                        color: Colors.orange[600],
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        // Mini Player
+        if (musicProvider.currentSong != null)
+          _buildMiniPlayer(context, musicProvider),
+        
+        // Song list
+        Expanded(
+          child: musicProvider.currentTab?.songs.isEmpty == true
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.queue_music, size: 64, color: Colors.blue[300]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Chưa có bài hát nào trong "${musicProvider.currentTab?.title}"',
+                        style: TextStyle(fontSize: 16, color: Colors.blue[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Nhấn + để thêm nhạc',
+                        style: TextStyle(color: Colors.blue[400]),
+                      ),
+                    ],
+                  ),
+                )
+              : GridView.builder(
+                  padding: const EdgeInsets.all(8),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                    childAspectRatio: 0.65,
+                  ),
+                  itemCount: musicProvider.currentTab?.songs.length ?? 0,
+                  itemBuilder: (context, index) {
+                    final song = musicProvider.currentTab!.songs[index];
+                    return SongListItem(
+                      song: song,
+                      onTap: () {
+                        musicProvider.playSong(song);
+                      },
+                      onDelete: () => musicProvider.removeSongFromTab(
+                        musicProvider.currentTabIndex,
+                        index,
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniPlayer(BuildContext context, MusicProvider musicProvider) {
+    final currentSong = musicProvider.currentSong!;
+    
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.blue[700]!,
+            Colors.blue[900]!,
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Song info and main controls
+              Row(
+                children: [
+                  // Song info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          currentSong.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (currentSong.artist != null)
+                          Text(
+                            currentSong.artist!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(width: 16),
+                  
+                  // Play/Pause button
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      onPressed: musicProvider.pauseResume,
+                      icon: Icon(
+                        musicProvider.isPlaying ? Icons.pause : Icons.play_arrow,
+                        color: Colors.blue[700],
+                        size: 30,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Progress bar and time
+              Column(
+                children: [
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: Colors.white,
+                      inactiveTrackColor: Colors.white.withOpacity(0.3),
+                      thumbColor: Colors.white,
+                      overlayColor: Colors.white.withOpacity(0.2),
+                      trackHeight: 4,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                    ),
+                    child: Slider(
+                      value: musicProvider.totalDuration.inMilliseconds > 0
+                          ? musicProvider.currentPosition.inMilliseconds / 
+                            musicProvider.totalDuration.inMilliseconds
+                          : 0.0,
+                      onChanged: (value) {
+                        final position = Duration(
+                          milliseconds: (value * musicProvider.totalDuration.inMilliseconds).round(),
+                        );
+                        musicProvider.seek(position);
+                      },
+                    ),
+                  ),
+                  
+                  // Time labels
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _formatDuration(musicProvider.currentPosition),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        _formatDuration(musicProvider.totalDuration),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Volume control
+              Row(
+                children: [
+                  Icon(
+                    Icons.volume_down,
+                    color: Colors.white.withOpacity(0.8),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        activeTrackColor: Colors.white,
+                        inactiveTrackColor: Colors.white.withOpacity(0.3),
+                        thumbColor: Colors.white,
+                        overlayColor: Colors.white.withOpacity(0.2),
+                        trackHeight: 3,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                      ),
+                      child: Slider(
+                        value: musicProvider.volume,
+                        onChanged: (value) {
+                          musicProvider.setVolume(value);
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.volume_up,
+                    color: Colors.white.withOpacity(0.8),
+                    size: 20,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
   }
 
   void _showAddTabDialog(BuildContext context) {
@@ -439,10 +630,152 @@ class HomeScreen extends StatelessWidget {
                     content: Text('Đã đổi tên thành "$newTitle"'),
                     backgroundColor: Colors.green,
                     duration: const Duration(seconds: 2),
+                        ),
+    );
+  }
+
+  void _showSortMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Title
+            Row(
+              children: [
+                Icon(Icons.sort, color: Colors.blue[700]),
+                const SizedBox(width: 8),
+                const Text(
+                  'Sắp xếp bài hát',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            
+            // Sort current tab option
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.tab, color: Colors.blue[700]),
+              ),
+              title: const Text('Sắp xếp tab hiện tại'),
+              subtitle: Text('Sắp xếp bài hát trong tab "${context.read<MusicProvider>().currentTab?.title ?? ''}"'),
+              trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+              onTap: () {
+                context.read<MusicProvider>().sortSongsInCurrentTab();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã sắp xếp bài hát trong tab hiện tại'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
                   ),
                 );
-              }
-            },
+              },
+            ),
+            
+            const Divider(),
+            
+            // Sort all tabs option
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.library_music, color: Colors.orange[700]),
+              ),
+              title: const Text('Sắp xếp tất cả tab'),
+              subtitle: const Text('Sắp xếp bài hát trong tất cả các tab'),
+              trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+              onTap: () {
+                context.read<MusicProvider>().sortSongsInAllTabs();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã sắp xếp bài hát trong tất cả tab'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Info about sorting
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info, color: Colors.blue[600], size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Cách sắp xếp:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• Ưu tiên theo số ở đầu tên (1, 2, 3...)',
+                    style: TextStyle(color: Colors.blue[600], fontSize: 12),
+                  ),
+                  Text(
+                    '• Nếu không có số, sắp xếp theo alphabet',
+                    style: TextStyle(color: Colors.blue[600], fontSize: 12),
+                  ),
+                  Text(
+                    '• Ví dụ: "1 Bài hát đầu", "2 Bài thứ hai", "Abc", "Xyz"',
+                    style: TextStyle(color: Colors.blue[600], fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+} ,
             child: const Text('Lưu'),
           ),
         ],
@@ -523,4 +856,146 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-} 
+
+  void _showSortMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Title
+            Row(
+              children: [
+                Icon(Icons.sort, color: Colors.blue[700]),
+                const SizedBox(width: 8),
+                const Text(
+                  'Sắp xếp bài hát',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            
+            // Sort current tab option
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.tab, color: Colors.blue[700]),
+              ),
+              title: const Text('Sắp xếp tab hiện tại'),
+              subtitle: Text('Sắp xếp bài hát trong tab "${context.read<MusicProvider>().currentTab?.title ?? ''}"'),
+              trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+              onTap: () {
+                context.read<MusicProvider>().sortSongsInCurrentTab();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã sắp xếp bài hát trong tab hiện tại'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+            
+            const Divider(),
+            
+            // Sort all tabs option
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.library_music, color: Colors.orange[700]),
+              ),
+              title: const Text('Sắp xếp tất cả tab'),
+              subtitle: const Text('Sắp xếp bài hát trong tất cả các tab'),
+              trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+              onTap: () {
+                context.read<MusicProvider>().sortSongsInAllTabs();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã sắp xếp bài hát trong tất cả tab'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Info about sorting
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info, color: Colors.blue[600], size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Cách sắp xếp:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• Ưu tiên theo số ở đầu tên (1, 2, 3...)',
+                    style: TextStyle(color: Colors.blue[600], fontSize: 12),
+                  ),
+                  Text(
+                    '• Nếu không có số, sắp xếp theo alphabet',
+                    style: TextStyle(color: Colors.blue[600], fontSize: 12),
+                  ),
+                  Text(
+                    '• Ví dụ: "1 Bài hát đầu", "2 Bài thứ hai", "Abc", "Xyz"',
+                    style: TextStyle(color: Colors.blue[600], fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -117,6 +117,8 @@ class MusicProvider extends ChangeNotifier {
             _tabs[tabIndex] = _tabs[tabIndex].copyWith(songs: updatedSongs);
           }
         }
+        // Automatically sort songs after adding
+        _sortSongsInTab(tabIndex);
         _saveData();
         notifyListeners();
       }
@@ -135,6 +137,60 @@ class MusicProvider extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  // Sorting functionality
+  void _sortSongsInTab(int tabIndex) {
+    if (tabIndex >= 0 && tabIndex < _tabs.length) {
+      final songs = List<Song>.from(_tabs[tabIndex].songs);
+      songs.sort(_customSongComparator);
+      _tabs[tabIndex] = _tabs[tabIndex].copyWith(songs: songs);
+    }
+  }
+
+  void sortSongsInCurrentTab() {
+    if (_currentTabIndex >= 0 && _currentTabIndex < _tabs.length) {
+      _sortSongsInTab(_currentTabIndex);
+      _saveData();
+      notifyListeners();
+    }
+  }
+
+  void sortSongsInAllTabs() {
+    for (int i = 0; i < _tabs.length; i++) {
+      _sortSongsInTab(i);
+    }
+    _saveData();
+    notifyListeners();
+  }
+
+  // Custom comparator: numbers first, then alphabetical
+  int _customSongComparator(Song a, Song b) {
+    final String titleA = a.title.toLowerCase().trim();
+    final String titleB = b.title.toLowerCase().trim();
+    
+    // Extract numbers from the beginning of titles
+    final RegExp numberRegex = RegExp(r'^(\d+)');
+    final Match? matchA = numberRegex.firstMatch(titleA);
+    final Match? matchB = numberRegex.firstMatch(titleB);
+    
+    // Check if both titles start with numbers
+    if (matchA != null && matchB != null) {
+      final int numA = int.parse(matchA.group(1)!);
+      final int numB = int.parse(matchB.group(1)!);
+      return numA.compareTo(numB);
+    }
+    
+    // If only one starts with a number, prioritize it
+    if (matchA != null && matchB == null) {
+      return -1; // A comes first (has number)
+    }
+    if (matchA == null && matchB != null) {
+      return 1; // B comes first (has number)
+    }
+    
+    // If neither starts with a number, sort alphabetically
+    return titleA.compareTo(titleB);
   }
 
   // Playback controls
